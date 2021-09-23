@@ -15,6 +15,15 @@ class CreateProductsTable extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->string('crawler_id');
+            $table->string('name');
+            $table->text('body');
+            $table->string('location');
+            $table->string('image');
+            $table->string('type');
+            $table->string('price')->nullable();
+            $table->foreignId('category_id')
+                ->references('id')->on('categories');
             $table->timestamps();
         });
     }

@@ -2,7 +2,8 @@
 
 namespace App\Crawler;
 
-use Illuminate\Support\Collection;
+use Goutte\Client;
+use Symfony\Component\HttpClient\HttpClient;
 
 class BaseCrawler
 {
@@ -10,7 +11,9 @@ class BaseCrawler
 
     public function getCrawler()
     {
-        return \Goutte::request('GET', "https://www.milanuncios.com$this->url");
+
+        $client = new Client(HttpClient::create(['timeout' => 120]));
+        return $client->request('GET', "https://www.milanuncios.com$this->url");
     }
 
     protected function getAll()

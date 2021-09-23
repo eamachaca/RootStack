@@ -2,13 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Crawler\ProductCrawler;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\Tag;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class ProcessProductJob implements ShouldQueue
 {
@@ -31,17 +35,39 @@ class ProcessProductJob implements ShouldQueue
      */
     public function handle()
     {
-        $crawler = new CategoryCrawler();
-        $categories = $crawler->getAll();
-        $auxCategories = [];
-        $now = Carbon::now();
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', '-1');
+        $categories = Category::all();
+        $products = collect();
+        $tags = collect();
         foreach ($categories as $category) {
-            $auxCategories[] = ['parent_id' => null, 'name' => $category->name, 'scrap_link' => $category->link, 'created_at' => $now, 'updated_at' => $now];
-            $id = count($auxCategories);
-            foreach ($category->sons as $son) {
-                $auxCategories[] = ['parent_id' => $id, 'name' => $son->name, 'scrap_link' => $son->link, 'created_at' => $now, 'updated_at' => $now];
-            }
+            $crawler = new ProductCrawler($category->scrap_link, $category->id);
+            $this->addProducts($products, $tags, $crawler->getAll());
         }
-        Category::insert($auxCategories);
+        Product::insert($products->toArray());
+        Tag::insert($tags->toArray());
+    }
+
+    private function addProducts(Collection $products, Collection $tags, Collection $crawlers)
+    {
+        $now = Carbon::now();
+        foreach ($crawlers as $crawler) {
+            $products->add([
+                'name' => $crawler->name,
+                'category_id' => $crawler->category_id,
+                'price' => !is_numeric($crawler->price) ? null : $crawler->price,
+                'image' => $crawler->firstImage,
+                'body' => $crawler->body,
+                'type' => $crawler->type,
+                'crawler_id' => $crawler->id,
+                'location' => $crawler->location,
+                'created_at' => $now, 'updated_at' => $now
+            ]);
+            $productId = $products->count();
+            foreach ($crawler->tags as $tag) {
+                $tags->add(['name' => $tag, 'product_id' => $productId, 'created_at' => $now, 'updated_at' => $now]);
+            }
+
+        }
     }
 }
