@@ -34,6 +34,6 @@ class HomeController extends Controller
     public function products($id)
     {
         $category = Category::with('products')->find($id);
-        dd($category);
+        return view('products', compact('category'));
     }
 }

@@ -11,4 +11,9 @@ class Product extends Model
 
     protected $fillable = ['body', 'category_id', 'crawler_id', 'image', 'location', 'name', 'price', 'type', 'created_at', 'updated_at'];
 
+    public function tags()
+    {
+        return $this->hasMany(Tag::class);
+    }
+
 }
