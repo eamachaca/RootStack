@@ -30,7 +30,7 @@ class HomeController extends Controller
         $categories = Category::with('children')
             ->withCount('products')
             ->whereNull('parent_id')
-            ->paginate(5);
+            ->paginate(2);
         return view('home', compact('categories'));
     }
 
