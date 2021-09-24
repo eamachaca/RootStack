@@ -16,9 +16,10 @@ class ProductCrawler extends BaseCrawler
 
     public function getAll(): \Illuminate\Support\Collection
     {
-        $links = $this->filterWithAdItem();
+        $links = $this->filterWithAdItem('.ProfesionalCardTestABClass');
         $links = array_merge($links, $this->filterWithAdCard());
-        $links = array_merge($links, $this->filterWithCardTest());
+        $links = array_merge($links, $this->filterWithAdItem('.ParticularCardTestABClass'));
+        $links = array_merge($links, $this->filterWithAdItem('.CardTestABClass'));
         return collect($links);
     }
 
@@ -37,7 +38,7 @@ class ProductCrawler extends BaseCrawler
         }
     }
 
-    private function filterWithAdItem($card = '.ProfesionalCardTestABClass')
+    private function filterWithAdItem($card)
     {
         return $this->filter($card, '.x3', '.x5', '.aditem-detail-title',
             '.list-location-region', '.tx', '.aditem-price', '.tag-mobile');
@@ -72,11 +73,6 @@ class ProductCrawler extends BaseCrawler
     {
         return $this->filter('.ma-AdCard', '.ma-AdCard-sellType', '.ma-AdCard-adId', '.ma-AdCard-title-text',
             '.ma-AdCard-location', '.ma-AdCardDescription-text', '.ma-AdPrice-value--default', 'ma-AdTag-label');
-    }
-
-    private function filterWithCardTest()
-    {
-        return $this->filterWithAdItem('.CardTestABClass');
     }
 
 }

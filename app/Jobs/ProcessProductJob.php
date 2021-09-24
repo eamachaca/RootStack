@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ProcessProductJob implements ShouldQueue
 {
@@ -37,7 +38,9 @@ class ProcessProductJob implements ShouldQueue
     {
         ini_set('memory_limit', '-1');
         ini_set('max_execution_time', '-1');
-        $categories = Category::withCount('products')->get()->where('products_count', '0');
+        $categories = Category::withCount('products')->get()->where('products_count', '0')->take(5);
+        if ($categories->count() > 0)
+            ProcessProductJob::dispatch();//recursive because as a queue, it isn't working if get all categories.
         $products = collect();
         $tags = collect();
         foreach ($categories as $category) {
