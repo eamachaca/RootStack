@@ -13,7 +13,7 @@
                                 <div class="d-flex justify-content-between align-items-center ">
                                     <div class="mt-2">
                                         <h4 class="text-uppercase">
-                                            <strong>{{$product->type}}</strong>({{$product->location}})</h4>
+                                            <strong>{{$product->type}}</strong> ({{$product->location}})</h4>
                                         <div class="mt-5">
                                             <h5 class="text-uppercase mb-0">{{$product->name}}</h5>
                                             @if(!empty($product->price))

@@ -16,22 +16,9 @@ class ProductCrawler extends BaseCrawler
 
     public function getAll(): \Illuminate\Support\Collection
     {
-        $links = [];
-        $this->getCrawler()->filter('.ProfesionalCardTestABClass')->each(function ($node) use (&$links, &$firstImage) {
-            $type = $node->filter('.x3')->text();
-            $id = $node->filter('.x5')->text();
-            $name = $node->filter('.aditem-detail-title')->text();
-            $location = $node->filter('.list-location-region')->text();
-            $body = $node->filter('.tx')->text();
-            $price = str_replace('€', '', str_replace('.', '', $this->getPrice($type, $node)));
-            $firstImage = $this->getRemote($id);
-            $category_id = $this->categoryId;
-            $tags = [];
-            $node->filter('.tag-mobile')->each(function ($node) use (&$tags) {
-                $tags[] = $node->text();
-            });
-            $links[] = (object)compact('type', 'id', 'body', 'firstImage', 'price', 'name', 'category_id', 'tags', 'location');
-        });
+        $links = $this->filterWithAdItem();
+        $links = array_merge($links, $this->filterWithAdCard());
+        $links = array_merge($links, $this->filterWithCardTest());
         return collect($links);
     }
 
@@ -41,13 +28,55 @@ class ProductCrawler extends BaseCrawler
         return "https://img.milanuncios.com/fp/" . substr($id, 0, 4) . '/' . substr($id, 4, 2) . '/' . "{$id}_1.jpg";
     }
 
-    private function getPrice($type, $node)
+    private function getPrice($priceCard, $node)
     {
         try {
-            return $node->filter('.aditem-price')->text();
+            return $node->filter($priceCard)->text();
         } catch (\Exception $ignored) {
             return null;
         }
+    }
+
+    private function filterWithAdItem($card = '.ProfesionalCardTestABClass')
+    {
+        return $this->filter($card, '.x3', '.x5', '.aditem-detail-title',
+            '.list-location-region', '.tx', '.aditem-price', '.tag-mobile');
+    }
+
+    private function filter($card, $typeCard, $idCard, $nameCard, $locationCard, $bodyCard, $priceCard, $tagsCard)
+    {
+        $links = [];
+        $this->getCrawler()->filter($card)->each(function ($node) use (&$links, $typeCard, $idCard, $nameCard, $locationCard, $bodyCard, $priceCard, $tagsCard) {
+            try {
+                $type = $node->filter($typeCard)->text();
+                $id = $node->filter($idCard)->text();
+                $name = $node->filter($nameCard)->text();
+                $location = $node->filter($locationCard)->text();
+                $body = $node->filter($bodyCard)->text();
+                $price = str_replace('€', '', str_replace('.', '', $this->getPrice($priceCard, $node)));
+                $firstImage = $this->getRemote($id);
+                $category_id = $this->categoryId;
+                $tags = [];
+                $node->filter($tagsCard)->each(function ($node) use (&$tags) {
+                    $tags[] = $node->text();
+                });
+                $links[] = (object)compact('type', 'id', 'body', 'firstImage', 'price', 'name', 'category_id', 'tags', 'location');
+            } catch (\Exception $exception) {
+                Log::info($exception);
+            }
+        });
+        return $links;
+    }
+
+    private function filterWithAdCard()
+    {
+        return $this->filter('.ma-AdCard', '.ma-AdCard-sellType', '.ma-AdCard-adId', '.ma-AdCard-title-text',
+            '.ma-AdCard-location', '.ma-AdCardDescription-text', '.ma-AdPrice-value--default', 'ma-AdTag-label');
+    }
+
+    private function filterWithCardTest()
+    {
+        return $this->filterWithAdItem('.CardTestABClass');
     }
 
 }

@@ -33,17 +33,19 @@ class ProcessCategoryJob implements ShouldQueue
      */
     public function handle()
     {
-        $crawler = new CategoryCrawler();
-        $categories = $crawler->getAll();
-        $auxCategories = [];
-        $now = Carbon::now();
-        foreach ($categories as $category) {
-            $auxCategories[] = ['parent_id' => null, 'link_image' => $category->image, 'name' => $category->name, 'scrap_link' => $category->link, 'created_at' => $now, 'updated_at' => $now];
-            $id = count($auxCategories);
-            foreach ($category->sons as $son) {
-                $auxCategories[] = ['parent_id' => $id, 'link_image' => null, 'name' => $son->name, 'scrap_link' => $son->link, 'created_at' => $now, 'updated_at' => $now];
+        if (Category::count() == 0) {
+            $crawler = new CategoryCrawler();
+            $categories = $crawler->getAll();
+            $auxCategories = [];
+            $now = Carbon::now();
+            foreach ($categories as $category) {
+                $auxCategories[] = ['parent_id' => null, 'link_image' => $category->image, 'name' => $category->name, 'scrap_link' => $category->link, 'created_at' => $now, 'updated_at' => $now];
+                $id = count($auxCategories);
+                foreach ($category->sons as $son) {
+                    $auxCategories[] = ['parent_id' => $id, 'link_image' => null, 'name' => $son->name, 'scrap_link' => $son->link, 'created_at' => $now, 'updated_at' => $now];
+                }
             }
+            Category::insert($auxCategories);
         }
-        Category::insert($auxCategories);
     }
 }

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+    dispatch(new \App\Jobs\ProcessCategoryJob());
+    dispatch(new \App\Jobs\ProcessProductJob());
     return view('welcome');
 });
 
